@@ -1,18 +1,17 @@
-# RinhaBackend
+# Submissão para Rinha de Backend, Segunda Edição: 2024/Q1 - Controle de Concorrência
 
-To start your Phoenix server:
 
-  * Run `mix setup` to install and setup dependencies
-  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+<img src="https://upload.wikimedia.org/wikipedia/commons/c/c5/Nginx_logo.svg" alt="logo nginx" width="300" height="auto">
+<br />
+<img src="https://upload.wikimedia.org/wikipedia/commons/9/92/Official_Elixir_logo.png" alt="logo elixir" width="200" height="auto">
+<img src="https://upload.wikimedia.org/wikipedia/commons/2/29/Postgresql_elephant.svg" alt="logo postgres" width="200" height="auto">
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+## Newton Peixoto
+Submissão feita com:
+- `nginx` como load balancer
+- `postgres` como banco de dados
+- `elixir` para api com o framework `phoenix`
+- [repositório da api](https://github.com/newton-peixoto/rinha_backend_2024_q1)
 
-## Learn more
-
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+[@n0wahz](https://twitter.com/n0wahz) @ twitter
