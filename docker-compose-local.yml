@@ -1,0 +1,11 @@
+services:
+  pg:
+    image: postgres:14.1-alpine
+    environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=password
+        - POSTGRES_DB=rinha_backend
+    ports:
+        - '5432:5432'
+    volumes: 
+         - ./script.sql:/docker-entrypoint-initdb.d/init.sql
