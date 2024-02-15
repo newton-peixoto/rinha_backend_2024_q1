@@ -9,7 +9,7 @@ services:
       ERL_MAX_PORTS: 512
       DATABASE_URL: postgres://postgres:password@db/rinha_backend
       PORT: 4000
-      POOL_SIZE: 40
+      POOL_SIZE: 15
       SECRET_KEY_BASE: h7EdRgV1JsTFlxJ9pC2Gyihln66em+VWx2EOFNnk9Yy3yCxYNsXyRGEjdLJPNuHO
     depends_on:
       db:
@@ -28,7 +28,7 @@ services:
       ERL_MAX_PORTS: 512
       DATABASE_URL: postgres://postgres:password@db/rinha_backend
       PORT: 4000
-      POOL_SIZE: 40
+      POOL_SIZE: 15
       SECRET_KEY_BASE: h7EdRgV1JsTFlxJ9pC2Gyihln66em+VWx2EOFNnk9Yy3yCxYNsXyRGEjdLJPNuHO
  
   nginx:
