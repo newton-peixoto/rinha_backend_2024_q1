@@ -18,7 +18,7 @@ services:
       resources:
         limits:
           cpus: "0.3"
-          memory: "100MB"
+          memory: "175MB"
 
   api02:
     <<: *api 
@@ -63,7 +63,7 @@ services:
       resources:
         limits:
           cpus: "0.8"
-          memory: "300MB"
+          memory: "150MB"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres -d rinha_backend" ]
       interval: 3s

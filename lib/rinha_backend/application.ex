@@ -4,6 +4,7 @@ defmodule RinhaBackend.Application do
   @moduledoc false
 
   use Application
+  import Ecto.Query
 
   @impl true
   def start(_type, _args) do
@@ -21,7 +22,21 @@ defmodule RinhaBackend.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: RinhaBackend.Supervisor]
-    Supervisor.start_link(children, opts)
+    started = Supervisor.start_link(children, opts)
+
+    IO.inspect("warmming up!..")
+    warm_up()
+    IO.inspect("done!..")
+    started
+  end
+
+  defp warm_up() do
+    Enum.each(1..1000, fn _ ->
+      id = Enum.random(1..5)
+
+      %RinhaBackend.ClientSchema{} =
+        RinhaBackend.ClientSchema |> where([u], u.id == ^id) |> RinhaBackend.Repo.one()
+    end)
   end
 
   # Tell Phoenix to update the endpoint configuration
