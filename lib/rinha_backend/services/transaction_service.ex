@@ -1,41 +1,54 @@
 defmodule RinhaBackend.Services.TransactionService do
-  alias RinhaBackend.TransactionSchema
-  alias RinhaBackend.ClientSchema
   alias RinhaBackend.Repo
-  import Ecto.Query
+
 
   def create_transaction(id, params) do
-    Repo.transaction(fn ->
-      try do
-        Repo.insert(%TransactionSchema{
-          tipo: params.tipo,
-          descricao: params.descricao,
-          valor: params.valor,
-          cliente_id: id
-        })
-      rescue
-        Postgrex.Error -> Repo.rollback(:invalid_balance)
+    %{
+      rows: [
+        [{saldo, had_problem, _, limite}] | _
+      ]
+    } =
+      case params.tipo do
+        :c -> Repo.query!("select creditar(#{id},#{params.valor},'#{params.descricao}')")
+        :d -> Repo.query!("select debitar(#{id},#{params.valor},'#{params.descricao}')")
       end
 
-      client =
-        %ClientSchema{} =
-        ClientSchema |> where([u], u.id == ^id) |> Repo.one()
-
-      client
-    end)
+    cond do
+      had_problem == true -> {:error, :invalid_balance}
+      true -> {:ok, %{limite: limite, saldo: saldo}}
+    end
   end
 
   def get_transactions(id) do
-    client = %ClientSchema{} = Repo.get(ClientSchema, id)
+    _ =
+      %{
+        rows: rows
+      } =
+      Repo.query!(
+        "(select saldo, 'saldo' as tipo, 'saldo' as descricao, now() as realizada_em, limite
+    from clientes
+    where id = #{id})
+    union all
+    (select valor, tipo, descricao, realizada_em, 1 as limite
+    from transacoes
+    where cliente_id = #{id}
+    order by id desc limit 10)"
+      )
 
-    query =
-      from t in TransactionSchema,
-        where: t.cliente_id == ^id,
-        order_by: [desc: :realizada_em],
-        limit: 10
+    [[saldo, _, _, _, limite] | transacoes] = rows
 
-    transactions = Repo.all(query)
+    cliente = %{saldo: saldo, limite: limite}
 
-    %{client: client, transactions: transactions}
+    transactions =
+      Enum.map(transacoes, fn [valor, tipo, descricao, realizada_em, _] ->
+        %{
+          valor: valor,
+          tipo: tipo,
+          descricao: descricao,
+          realizada_em: realizada_em
+        }
+      end)
+
+    %{client: cliente, transactions: transactions}
   end
 end

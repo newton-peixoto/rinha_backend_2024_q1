@@ -17,6 +17,8 @@ CREATE UNLOGGED TABLE IF NOT EXISTS transacoes (
 CREATE INDEX idx_cliente_id
 ON transacoes(cliente_id);
 
+create index on transacoes (id DESC)
+
 INSERT INTO clientes (nome, limite, saldo)
 VALUES
     ('Newton', 100000, 0),
@@ -25,34 +27,87 @@ VALUES
     ('Amy', 10000000, 0),
     ('Mel', 500000, 0);
 
-CREATE OR REPLACE FUNCTION atualizar_saldo()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION debitar(
+	cliente_id_tx INT,
+	valor_tx INT,
+	descricao_tx VARCHAR(10))
+RETURNS TABLE (
+	novo_saldo INT,
+	possui_erro BOOL,
+	mensagem VARCHAR(20),
+	limite INT
+	)
+LANGUAGE plpgsql
+AS $$
 DECLARE
-    v_saldo INTEGER;
-    v_limite INTEGER;
+	saldo_atual int;
+	limite_atual int;
 BEGIN
-    SELECT saldo, limite INTO v_saldo, v_limite
-    FROM clientes WHERE id = NEW.cliente_id
-    FOR UPDATE;
+	PERFORM pg_advisory_xact_lock(cliente_id_tx);
+	SELECT 
+		c.limite,
+		COALESCE(c.saldo, 0)
+	INTO
+		limite_atual,
+		saldo_atual
+	FROM clientes c
+	WHERE c.id = cliente_id_tx;
 
-    IF NEW.tipo = 'd' AND (v_saldo - NEW.valor) < -v_limite THEN
-        RAISE EXCEPTION 'Débito excede o limite do cliente';
-    END IF;
+	IF saldo_atual - valor_tx >= limite_atual * -1 THEN
+		INSERT INTO transacoes
+			VALUES(DEFAULT, 'd',descricao_tx,  valor_tx, cliente_id_tx, NOW());
+		
+		UPDATE clientes 
+		SET saldo = saldo - valor_tx
+		WHERE id = cliente_id_tx;
 
-    IF NEW.tipo = 'd' THEN
-        UPDATE clientes SET saldo = saldo - NEW.valor WHERE id = NEW.cliente_id;
-    ELSE
-        UPDATE clientes SET saldo = saldo + NEW.valor WHERE id = NEW.cliente_id;
-    END IF;
-
-    RETURN NEW;
+		RETURN QUERY
+			SELECT
+				saldo,
+				FALSE,
+				'ok'::VARCHAR(20),
+				clientes.limite 
+			FROM clientes
+			WHERE id = cliente_id_tx;
+	ELSE
+		RETURN QUERY
+			SELECT
+				saldo,
+				TRUE,
+				'saldo insuficente'::VARCHAR(20),
+				clientes.limite
+			FROM clientes
+			WHERE id = cliente_id_tx;
+	END IF;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
-CREATE TRIGGER atualizar_saldo_trigger
-AFTER INSERT ON transacoes
-FOR EACH ROW
-EXECUTE FUNCTION atualizar_saldo();
+CREATE OR REPLACE FUNCTION creditar(
+	cliente_id_tx INT,
+	valor_tx INT,
+	descricao_tx VARCHAR(10))
+RETURNS TABLE (
+	novo_saldo INT,
+	possui_erro BOOL,
+	mensagem VARCHAR(20),
+    limite INT
+	)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	PERFORM pg_advisory_xact_lock(cliente_id_tx);
+
+	INSERT INTO transacoes
+		VALUES(DEFAULT, 'c',descricao_tx,  valor_tx, cliente_id_tx, NOW());
+
+	RETURN QUERY
+		UPDATE clientes
+		SET saldo = saldo + valor_tx
+		WHERE id = cliente_id_tx
+		RETURNING saldo, FALSE, 'ok'::VARCHAR(20), clientes.limite ;
+END;
+$$;
+
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;

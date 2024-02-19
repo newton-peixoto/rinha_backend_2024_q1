@@ -51,15 +51,7 @@ defmodule RinhaBackendWeb.TransactionController do
         data_extrato: NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second),
         limite: client.limite
       },
-      ultimas_transacoes:
-        Enum.map(transactions, fn transaction ->
-          %{
-            valor: transaction.valor,
-            tipo: transaction.tipo,
-            descricao: transaction.descricao,
-            realizada_em: transaction.realizada_em
-          }
-        end)
+      ultimas_transacoes: transactions
     }
   end
 end
